@@ -54,7 +54,7 @@ const addElement = (elem) => {
     const item = document.createElement('div');
     item.setAttribute('data-file', elem.file);
     item.classList.add('file-item', 'js-get-file');
-    item.innerHTML = `<img src="img/file-144.png" alt=""><p>${elem.name}</p>`
+    item.innerHTML = `<img src="${getIcon(elem.name)}" alt=""><p>${elem.name}</p>`
 
     document.querySelector('.files').appendChild(item);
     $('.js-get-file').dblclick(async function () {
@@ -68,6 +68,27 @@ const showWarning = (message) => {
     toast.querySelector('.toast-text').innerText = message;
     toast.style.display = 'flex';
     setTimeout(() => toast.style.display = 'none', 2000)
+}
+
+const getIcon = (name) => {
+    name = name.split('.').pop();
+
+    switch(name) {
+        case 'docx':
+        case 'doc':
+            return 'img/docx.png';
+        case 'jpeg': return 'img/jpeg.png';
+        case 'jpg': return 'img/jpg.png';
+        case 'pdf': return 'img/pdf.png';
+        case 'png': return 'img/png.png';
+        case 'txt': return 'img/txt.png';
+        case 'xls':
+        case 'xlsx':
+            return 'img/xls.png';
+        case 'zip': return 'img/zip.png';
+    }
+
+    return 'img/unknown.png';
 }
 
 $('.js-open-dir').click(async function () {
@@ -84,31 +105,6 @@ $('.js-open-dir').dblclick(async function () {
     const file = this.getAttribute('data-link');
     window.open(file, "_self");
 })
-
-$('.js-get-preview').click(async function () {
-    const result = await $.ajax({
-        url: 'https://cloud-api.yandex.net/v1/disk/resources?fields=preview&path=' + this.querySelector('img').getAttribute('data-path'),
-        method: 'GET',
-        headers: {
-            'Authorization': 'OAuth y0_AgAAAABmxWXmAAj9QwAAAADZdEsqOAFLmTBsTLO__IQaRE7jdfpsZmI'
-        },
-        success: function (response) {
-            console.log(response)
-            window.open(response.preview)
-
-        },
-    });
-
-    // const result = await sendRequest({
-    //     path: 'https://cloud-api.yandex.net/v1/disk/resources?path=' + this.querySelector('img').getAttribute('data-path'),
-    //     method: "GET",
-    //     headers: {
-    //         'Authorization': 'OAuth y0_AgAAAABmxWXmAAj9QwAAAADZdEsqOAFLmTBsTLO__IQaRE7jdfpsZmI'
-    //     },
-    // })
-
-
-});
 
 const sendRequest = async ({path, data = {}, method = "GET"}) => {
     try {

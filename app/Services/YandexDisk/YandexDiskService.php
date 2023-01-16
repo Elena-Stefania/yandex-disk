@@ -2,22 +2,40 @@
 
 namespace App\Services\YandexDisk;
 
+use Arhitector\Yandex\Disk;
 use Illuminate\Support\Facades\Storage;
 
 class YandexDiskService
 {
     private string $url = 'https://cloud-api.yandex.net/v1/';
     private $client = null;
+    private Disk $storage;
 
     public function __construct()
     {
         $this->client = new \GuzzleHttp\Client(['base_uri' => $this->url, 'headers' => ['Authorization' => 'OAuth ' . env('YANDEX_DISK_OAUTH_TOKEN')]]);
+        $this->storage = new Disk(env('YANDEX_DISK_OAUTH_TOKEN'));
     }
 
     public function getResource(string $folder)
     {
         $response = $this->client->request('GET', 'disk/resources?path=' . $folder);
-        return json_decode($response->getBody());
+        $data = json_decode($response->getBody());
+        $files = collect();
+        $files->path = $data->path;
+
+        if (isset($data->_embedded)) {
+            foreach ($data->_embedded->items as $item) {
+                if (isset($item->media_type) && $item->media_type == 'image')
+                    $item->preview = $this->getImage($item->path);
+                else $item->preview = null;
+
+                $files->push($item);
+            }
+            return $files;
+        }
+
+        return $data;
     }
 
     public function uploadFile($file, $path)
@@ -47,5 +65,11 @@ class YandexDiskService
             if ($e->getCode() == 413)
                 return 'Слишком большой размер файла';
         }
+    }
+
+    private function getImage($path)
+    {
+        $img = $this->storage->getResource($path);
+        return $img->getLink();
     }
 }
